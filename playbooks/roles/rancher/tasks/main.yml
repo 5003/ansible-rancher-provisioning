@@ -1,0 +1,132 @@
+---
+- name: ======
+  set_fact:
+    server_expose_port: "{{ rancher_server_expose_port | default('8080') }}"
+    server_url: "http://{{ rancher_server_fqdn }}"
+  failed_when: rancher_server_fqdn is not defined
+  tags:
+    - rancher:server
+    - rancher:agent
+
+- name: ======
+  set_fact:
+    server_version: "v{{ rancher_server_version | default('1.2.0') }}"
+    container_name: "rancher-server"
+  tags:
+    - rancher:server
+
+- block:
+    - docker_container:
+        name: "{{ container_name }}"
+        image: rancher/server:{{ server_version }}
+        restart_policy: always
+        ports: "{{ server_expose_port }}:8080"
+      become: yes
+      register: inspect_server
+      name: ---
+    - command: docker logs {{ container_name }}
+      become: yes
+      register: wait_ready
+      until: wait_ready.stdout.find("Listening on") != -1
+      retries: 40
+      delay: 10
+      when: inspect_server | changed
+      name: ---
+    - name: waiting for another application to complete
+      pause: minutes=2
+  tags:
+    - rancher:server
+
+- name: ======
+  set_fact:
+    agent_version: "v{{ rancher_agent_version | default('1.0.2') }}"
+    api_version: "{{ rancher_api_version | default('v1') }}"
+    container_name: "rancher-agent"
+  tags:
+    - rancher:agent
+
+- name: ======
+  become: yes
+  command: docker ps --format "{{ '{{ .Names }}' }}"
+  register: containers
+  tags:
+    - rancher:agent
+
+- block:
+    - uri:
+        method: GET
+        status_code: 200
+        return_content: yes
+        url: "{{ server_url }}:{{ server_expose_port }}/{{ api_version }}/projects"
+      register: get_projects
+      name: ---
+    - uri:
+        method: POST
+        status_code: 201
+        return_content: yes
+        url: "{{ server_url }}:{{ server_expose_port }}/{{ api_version }}/projects/{{ get_projects.json['data'][0]['id'] }}/registrationtokens"
+      register: post_tokens
+      name: ---
+    - uri:
+        method: GET
+        return_content: yes
+        url: "{{ post_tokens.json['links']['self'] }}"
+      register: get_tokens
+      name: ---
+    - docker_container:
+        name: ""
+        command: "{{ get_tokens.json['registrationUrl'] }}"
+        image: rancher/agent:{{ agent_version }}
+        volumes: /var/run/docker.sock:/var/run/docker.sock
+        privileged: yes
+        detach: yes
+        state: started
+      become: yes
+      name: ---
+      when: rancher_agent_version is defined
+    - command: "{{ get_tokens.json['command'] }}"
+      become: yes
+      name: ---
+      when: rancher_agent_version is not defined
+  when: "{{ container_name not in containers.stdout }}"
+  tags:
+    - rancher:agent
+
+- name: ======
+  set_fact:
+    compose_version: "v{{ rancher_compose_version | default('0.12.0') }}"
+  tags:
+    - rancher:compose
+
+- block:
+    - command: rancher-compose --version
+      register: valid_compose_version
+      failed_when: valid_compose_version.stdout.find(compose_version) == -1
+      name: ---
+  rescue:
+    - unarchive: dest=/usr/local/bin/ copy=no extra_opts="--strip-components 2" src=https://github.com/rancher/rancher-compose/releases/download/{{ compose_version }}/rancher-compose-linux-amd64-{{ compose_version }}.tar.xz
+      become: yes
+      # issue: https://github.com/ansible/ansible-modules-core/issues/3706
+      ignore_errors: yes
+      name: ---
+  tags:
+    - rancher:compose
+
+- name: ======
+  set_fact:
+    cli_version: "v{{ rancher_cli_version | default('0.4.0') }}"
+  tags:
+    - rancher:cli
+
+- block:
+    - command: rancher --version
+      register: valid_cli_version
+      failed_when: valid_cli_version.stdout.find(cli_version) == -1
+      name: ---
+  rescue:
+    - unarchive: dest=/usr/local/bin/ copy=no extra_opts="--strip-components 2" src=https://github.com/rancher/cli/releases/download/{{ cli_version }}/rancher-linux-amd64-{{ cli_version }}.tar.xz
+      become: yes
+      ignore_errors: yes
+      name: ---
+  tags:
+    - rancher:cli

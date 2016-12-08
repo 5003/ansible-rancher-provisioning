@@ -1,0 +1,9 @@
+---
+- name: get started
+  hosts: all
+  roles:
+    - role: common
+    - role: docker
+      tags:
+        - docker
+    - role: rancher

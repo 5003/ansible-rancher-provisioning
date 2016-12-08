@@ -1,0 +1,86 @@
+---
+- name: ======
+  set_fact:
+    builds_selected: "{{ docker_builds_selected | default('main') }}"
+    engine_version: "{{ docker_engine_version | default('1.12.3') }}"
+    key_servers:
+      - ha.pool.sks-keyservers.net
+      - pgp.mit.edu
+      - keyserver.ubuntu.com
+    key_id: "58118E89F3A912897C070ADBF76221572C52609D"
+  tags:
+    - docker:engine
+
+- block:
+  - apt_key: keyserver={{ item }} id={{ key_id }}
+    with_items: "{{ key_servers }}"
+    become: yes
+    name: ---
+  - command: dpkg --print-architecture
+    register: dpkg_print_arch
+    name: ---
+  - template: src=repo/apt/docker.list dest=/etc/apt/sources.list.d/
+    become: yes
+    register: apt_sources
+    name: ---
+  - apt: update_cache=yes
+    become: yes
+    when: apt_sources | changed
+    name: ---
+  - apt: name=docker-engine={{ engine_version }}-0~{{ ansible_distribution_release }} state=present
+    become: yes
+    name: ---
+  when: ansible_pkg_mgr | lower == 'apt'
+  tags:
+    - docker:engine
+
+- block:
+  - template: src=repo/yum/docker.repo dest=/etc/yum.repos.d/docker-{{ builds_selected }}.repo
+    become: yes
+    name: ---
+  - yum: name=docker-engine-{{ engine_version }} state=present
+    become: yes
+    name: ---
+  when: ansible_distribution | lower == 'centos'
+  tags:
+    - docker:engine
+
+- name: ======
+  become: yes
+  service: name=docker state=started enabled=yes
+  tags:
+    - docker:engine
+
+- name: ======
+  become: yes
+  service: name=docker state=restarted
+  ignore_errors: yes
+  tags:
+    - docker:daemon
+
+- name: ======
+  become: yes
+  copy: content={{ docker_daemon_config | to_nice_json }} dest=/etc/docker/daemon.json
+  notify:
+    - restart service
+  tags:
+    - docker:daemon
+
+- name: ======
+  set_fact:
+    compose_version: "{{ docker_compose_version | default('1.9.0') }}"
+  tags:
+    - docker:compose
+
+- name: ======
+  become: yes
+  pip: name=docker-compose version={{ compose_version }}
+  tags:
+    - docker:compose
+
+- name: ======
+  become: yes
+  pip: name=docker-py version=1.9.0
+  tags:
+    - docker:engine
+    - docker:compose

@@ -1,0 +1,26 @@
+[master]
+master ansible_host=172.16.0.18
+
+[minions:children]
+kevin
+stuart
+bob
+
+[kevin]
+kevin.minions ansible_host=172.16.1.18
+
+[stuart]
+stuart.minions ansible_host=172.16.2.18
+
+[bob]
+bob.minions ansible_host=172.16.3.18
+
+[all:vars]
+rancher_server_fqdn=172.16.0.18
+
+[master:vars]
+ansible_connection=local
+
+[minions:vars]
+ansible_user=vagrant
+ansible_ssh_pass=vagrant

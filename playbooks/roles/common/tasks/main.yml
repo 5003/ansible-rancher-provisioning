@@ -1,0 +1,51 @@
+---
+- name: ======
+  set_fact:
+    common_popular_package:
+      - curl
+      - wget
+      - git
+      - python-pip
+  tags:
+    - common:setup
+
+- block:
+    - apt: update_cache=yes cache_valid_time=86400
+      become: yes
+      name: ---
+    - apt: name={{ item }} state=present
+      become: yes
+      with_items:
+        - python-apt
+        - apt-transport-https
+        - "{{ common_popular_package }}"
+      name: ---
+  when: ansible_pkg_mgr | lower == 'apt'
+  tags:
+    - common:setup
+
+- block:
+    - command: yum clean all
+      become: yes
+      name: ---
+    - yum: name={{ item }} state=present
+      become: yes
+      with_items:
+        - epel-release
+        - "{{ common_popular_package }}"
+      name: ---
+  when: ansible_distribution | lower == 'centos'
+  tags:
+    - common:setup
+
+- name: ======
+  become: yes
+  pip: name=pip state=latest
+  tags:
+    - common:setup
+
+- name: ======
+  become: yes
+  hostname: name={{ custom_hostname | default(inventory_hostname) }}
+  tags:
+    - common:hostname

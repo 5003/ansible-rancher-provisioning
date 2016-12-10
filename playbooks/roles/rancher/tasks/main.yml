@@ -40,7 +40,7 @@
 - name: ======
   set_fact:
     agent_version: "v{{ rancher_agent_version | default('1.0.2') }}"
-    api_version: "{{ rancher_api_version | default('v1') }}"
+    api_version: "{{ rancher_api_version | default('v2-beta') }}"
     container_name: "rancher-agent"
   tags:
     - rancher:agent

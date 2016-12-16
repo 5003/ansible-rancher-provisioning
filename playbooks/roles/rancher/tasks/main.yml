@@ -10,7 +10,7 @@
 
 - name: ======
   set_fact:
-    server_version: "v{{ rancher_server_version | default('1.2.0') }}"
+    server_version: "v{{ rancher_server_version | default('1.2.1') }}"
     container_name: "rancher-server"
   tags:
     - rancher:server

@@ -32,8 +32,9 @@
       delay: 10
       when: inspect_server | changed
       name: ---
-    - name: waiting for another application to complete
-      pause: minutes=2
+    - debug: msg="type {{ server_url }}:{{ server_expose_port }} into your browser address bar"
+      when: inspect_server | changed
+      name: ---
   tags:
     - rancher:server
 

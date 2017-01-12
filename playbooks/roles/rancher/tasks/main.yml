@@ -19,7 +19,7 @@
     - docker_container:
         name: "{{ container_name }}"
         image: rancher/server:{{ server_version }}
-        restart_policy: always
+        restart_policy: unless-stopped
         ports: "{{ server_expose_port }}:8080"
       become: yes
       register: inspect_server

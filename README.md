@@ -5,6 +5,7 @@ vagrant ssh master
 
 cd /vagrant/
 make install-ansible
+# Current version: 2.1.4.0
 ```
 
 Installs the docker and their dependencies to the All hosts:

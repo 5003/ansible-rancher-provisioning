@@ -27,7 +27,7 @@
     become: yes
     when: apt_sources | changed
     name: ---
-  - apt: name=docker-engine={{ engine_version }}-0~{{ ansible_distribution_release }} state=present
+  - apt: name=docker-engine={{ engine_version }}-0~{{ ansible_distribution | lower }}-{{ ansible_distribution_release }} update_cache=yes state=present
     become: yes
     name: ---
   when: ansible_pkg_mgr | lower == 'apt'

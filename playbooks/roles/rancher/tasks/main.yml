@@ -40,7 +40,6 @@
 
 - name: ======
   set_fact:
-    agent_version: "v{{ rancher_agent_version | default('1.0.2') }}"
     api_version: "{{ rancher_api_version | default('v2-beta') }}"
     container_name: "rancher-agent"
   tags:
@@ -74,6 +73,9 @@
         url: "{{ post_tokens.json['links']['self'] }}"
       register: get_tokens
       name: ---
+    - set_fact:
+        agent_version: "v{{ rancher_agent_version | default(get_tokens.json['image'] | regex_replace('.*:v')) }}"
+      name: ---
     - docker_container:
         name: ""
         command: "{{ get_tokens.json['registrationUrl'] }}"
@@ -84,11 +86,6 @@
         state: started
       become: yes
       name: ---
-      when: rancher_agent_version is defined
-    - command: "{{ get_tokens.json['command'] }}"
-      become: yes
-      name: ---
-      when: rancher_agent_version is not defined
   when: "{{ container_name not in containers.stdout }}"
   tags:
     - rancher:agent

@@ -39,7 +39,7 @@ PARAM="--limit minions --tags rancher:agent" make play
 | key | default value | related tags | note |
 | --- | --- | --- | --- |
 | `docker_builds_selected` | *main* | `docker:engine` | *You can set `main`, `testing` and `experimental`* |
-| `docker_engine_version` | *1.13.0* | `docker:engine` | *x.x.x* |
+| `docker_engine_version` | *1.13.1* | `docker:engine` | *x.x.x* |
 | `docker_compose_version` | *1.9.0* | `docker:compose` | *x.x.x* |
 | `rancher_server_version` | *1.4.0* | `rancher:server` | *x.x.x (with no leading `v`)* |
 | `rancher_server_expose_port` | *8080* | `rancher:server` `rancher:agent` | *External Port number for rancher server* |

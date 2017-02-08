@@ -2,7 +2,7 @@
 - name: ======
   set_fact:
     builds_selected: "{{ docker_builds_selected | default('main') }}"
-    engine_version: "{{ docker_engine_version | default('1.13.0') }}"
+    engine_version: "{{ docker_engine_version | default('1.13.1') }}"
     key_servers:
       - ha.pool.sks-keyservers.net
       - pgp.mit.edu

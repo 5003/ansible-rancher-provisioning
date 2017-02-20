@@ -81,6 +81,8 @@
         command: "{{ get_tokens.json['registrationUrl'] }}"
         image: rancher/agent:{{ agent_version }}
         volumes: /var/run/docker.sock:/var/run/docker.sock
+        env:
+          CATTLE_AGENT_IP: "{{ ansible_host }}"
         privileged: yes
         detach: yes
         state: started

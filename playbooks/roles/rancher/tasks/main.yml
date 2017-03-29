@@ -94,7 +94,7 @@
 
 - name: ======
   set_fact:
-    compose_version: "v{{ rancher_compose_version | default('0.12.3') }}"
+    compose_version: "v{{ rancher_compose_version | default('0.12.4') }}"
   tags:
     - rancher:compose
 
